@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Power Log</title>
+  <title>Power Log - Final Pro</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -11,11 +11,8 @@
     body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
     .font-digital { font-family: 'Orbitron', sans-serif; }
     .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-    .glass-dark { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
     .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    select { -webkit-appearance: none; appearance: none; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
     input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
 </head>
@@ -24,111 +21,80 @@
 <div id="app">
   <div v-if="!isAuthenticated" class="min-h-screen flex items-center justify-center p-6 bg-slate-950">
     <div class="w-full max-w-xs text-center space-y-8 animate-fadeIn">
-      <div>
-        <h1 class="text-4xl font-black italic text-lime-400 tracking-tighter mb-2">POWER LOG</h1>
-        <p class="text-slate-500 text-[10px] uppercase tracking-widest font-bold">Encrypted System Access</p>
-      </div>
-      <div class="space-y-4">
-        <input type="password" v-model="passInput" @input="checkPass" placeholder="••••" 
-               class="w-full bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 text-center text-3xl font-digital tracking-[0.3em] focus:border-lime-400 outline-none transition-all text-lime-400 shadow-2xl">
-        <div class="flex justify-center gap-2">
-          <div v-for="i in 4" :class="passInput.length >= i ? 'bg-lime-400 shadow-[0_0_10px_#a3e635]' : 'bg-slate-800'" class="w-2 h-2 rounded-full transition-all"></div>
-        </div>
-        <p v-if="passError" class="text-red-500 text-[10px] font-black uppercase animate-pulse tracking-tighter">Incorrect Access Code - Access Denied</p>
-      </div>
+      <h1 class="text-4xl font-black italic text-lime-400 tracking-tighter mb-2">POWER LOG</h1>
+      <input type="password" v-model="passInput" @input="checkPass" placeholder="••••" class="w-full bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 text-center text-3xl font-digital text-lime-400 outline-none">
+      <p v-if="passError" class="text-red-500 text-[10px] font-black uppercase animate-pulse">Access Denied</p>
     </div>
   </div>
 
   <div v-else class="max-w-md mx-auto min-h-screen p-4 pb-24 animate-fadeIn">
-    
     <header class="flex justify-between items-center mb-6 pt-4 px-1">
       <div>
-        <h1 class="text-2xl font-black italic tracking-tighter text-lime-400 leading-none">POWER LOG</h1>
+        <h1 class="text-2xl font-black italic tracking-tighter text-lime-400">POWER LOG</h1>
         <div class="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-widest flex items-center gap-1">
-          <span class="text-orange-500 text-xs">🔥</span> {{ streak }} Day Streak
-          <span v-if="syncing" class="ml-2 text-lime-500 animate-pulse text-[8px]">● Syncing Data</span>
+          🔥 {{ streak }} Day Streak <span v-if="syncing" class="ml-2 text-lime-500 animate-pulse text-[8px]">● Syncing</span>
         </div>
       </div>
       <div class="bg-slate-900 p-1 rounded-2xl flex border border-slate-800 shadow-inner">
         <button v-for="u in ['JW', 'EP']" @click="switchUser(u)" 
-                :class="user === u ? (u === 'JW' ? 'bg-lime-400 text-black shadow-lg shadow-lime-400/20' : 'bg-orange-500 text-white shadow-lg shadow-orange-500/20') : 'text-slate-600'"
+                :class="user === u ? (u === 'JW' ? 'bg-lime-400 text-black' : 'bg-orange-500 text-white') : 'text-slate-600'"
                 class="px-6 py-2 rounded-xl font-black transition-all text-xs uppercase">{{ u }}</button>
       </div>
     </header>
 
-    <div v-if="userTimers[user] > 0" class="mb-6 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fadeIn">
-      <div :class="user === 'JW' ? 'bg-lime-400 text-black' : 'bg-orange-500 text-white'" class="p-10 text-center transition-colors duration-500 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-black/10">
-          <div class="h-full bg-black/20 transition-all duration-1000" :style="{width: (userTimers[user]/form.rest)*100 + '%'}"></div>
-        </div>
-        <p class="text-[10px] font-black uppercase mb-2 opacity-50 tracking-[0.4em]">Resting Time</p>
-        <div class="text-8xl font-digital leading-none mb-8 tracking-tighter">{{ userTimers[user] }}<span class="text-2xl ml-1">s</span></div>
-        <button @click="skipRest" class="bg-black/10 hover:bg-black/20 px-10 py-3 rounded-full text-[10px] font-black uppercase border border-black/10 backdrop-blur-md transition-all active:scale-95">Skip Interval</button>
+    <div v-if="userTimers[user] > 0" class="mb-6 rounded-[2.5rem] overflow-hidden shadow-2xl animate-fadeIn">
+      <div :class="user === 'JW' ? 'bg-lime-400 text-black' : 'bg-orange-500 text-white'" class="p-10 text-center">
+        <div class="text-8xl font-digital mb-8 tracking-tighter">{{ userTimers[user] }}s</div>
+        <button @click="skipRest" class="bg-black/10 px-10 py-3 rounded-full text-[10px] font-black uppercase border border-black/10">Skip Interval</button>
       </div>
     </div>
 
-    <div class="glass rounded-[2rem] p-6 mb-6 shadow-2xl relative border-t border-white/10">
+    <div class="glass rounded-[2rem] p-6 mb-6 shadow-2xl border-t border-white/10">
       <div class="space-y-6">
-        <div class="relative">
-          <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Action</label>
-          <div class="relative">
-            <select v-model="form.exercise" class="w-full bg-slate-800/80 rounded-2xl p-4 text-sm font-bold outline-none ring-1 ring-slate-700/50 focus:ring-2 ring-lime-400/50 transition-all appearance-none text-white">
-              <optgroup v-for="(list, cat) in actionLibrary[user]" :label="cat" class="bg-slate-900 text-slate-400">
-                <option v-for="ex in list" :value="ex" class="text-white">{{ ex }}</option>
-              </optgroup>
-            </select>
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">▼</div>
-          </div>
+        <div>
+          <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 ml-1">Action</label>
+          <select v-model="form.exercise" @change="loadLastInput" class="w-full bg-slate-800 rounded-2xl p-4 text-sm font-bold text-white outline-none ring-1 ring-slate-700">
+            <optgroup v-for="(list, cat) in actionLibrary[user]" :label="cat" class="bg-slate-900">
+              <option v-for="ex in list" :value="ex">{{ ex }}</option>
+            </optgroup>
+          </select>
         </div>
 
         <div v-if="unitType === 'min'" class="space-y-2">
-          <label class="text-[10px] font-black text-lime-400 uppercase tracking-[0.2em] ml-1">Duration (Minutes)</label>
-          <input v-model.number="form.duration" type="number" inputmode="numeric" placeholder="0" class="w-full bg-slate-900/50 rounded-[1.5rem] p-6 text-4xl font-black text-center text-lime-400 outline-none ring-1 ring-slate-700 focus:ring-2 ring-lime-400 shadow-inner">
+          <label class="text-[10px] font-black text-lime-400 uppercase tracking-widest ml-1">Duration (Minutes)</label>
+          <input v-model.number="form.duration" type="number" inputmode="numeric" placeholder="0" class="w-full bg-slate-900/50 rounded-[1.5rem] p-6 text-4xl font-black text-center text-lime-400 outline-none ring-1 ring-slate-700">
         </div>
 
-        <div v-else-if="unitType === 'km'" class="grid grid-cols-2 gap-4">
-          <div class="space-y-2 col-span-2">
-            <label class="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] ml-1">Distance (KM)</label>
-            <input v-model.number="form.weight" type="number" step="0.1" inputmode="decimal" placeholder="0.0" class="w-full bg-slate-900/50 rounded-2xl p-5 text-4xl font-black text-center text-cyan-400 outline-none ring-1 ring-slate-700/50 focus:ring-2 ring-cyan-400 transition-all">
-          </div>
+        <div v-else-if="unitType === 'km'" class="space-y-2">
+          <label class="text-[10px] font-black text-cyan-400 uppercase tracking-widest ml-1">Distance (KM)</label>
+          <input v-model.number="form.weight" type="number" step="0.1" inputmode="decimal" placeholder="0.0" class="w-full bg-slate-900/50 rounded-2xl p-5 text-4xl font-black text-center text-cyan-400 outline-none ring-1 ring-slate-700">
         </div>
         
         <div v-else class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
-            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Weight (kg)</label>
-            <input v-model.number="form.weight" type="number" step="0.5" inputmode="decimal" placeholder="0.0" class="w-full bg-slate-900/50 rounded-2xl p-5 text-2xl font-black text-center outline-none ring-1 ring-slate-700/50 focus:ring-2 ring-lime-400 transition-all">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Weight (kg)</label>
+            <input v-model.number="form.weight" type="number" step="0.5" inputmode="decimal" placeholder="0.0" class="w-full bg-slate-900/50 rounded-2xl p-5 text-2xl font-black text-center outline-none ring-1 ring-slate-700">
           </div>
           <div class="space-y-2">
-            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Reps</label>
-            <input v-model.number="form.reps" type="number" inputmode="numeric" placeholder="0" class="w-full bg-slate-900/50 rounded-2xl p-5 text-2xl font-black text-center outline-none ring-1 ring-slate-700/50 focus:ring-2 ring-lime-400 transition-all">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Reps</label>
+            <input v-model.number="form.reps" type="number" inputmode="numeric" placeholder="0" class="w-full bg-slate-900/50 rounded-2xl p-5 text-2xl font-black text-center outline-none ring-1 ring-slate-700">
           </div>
         </div>
 
         <div v-if="user === 'EP'" class="flex justify-between items-center bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
-          <div>
-            <span class="block text-xs font-black text-red-400 italic">Discomfort / Pain?</span>
-            <span class="text-[8px] text-red-500/40 uppercase font-bold">Neck & Shoulder Check</span>
-          </div>
-          <input type="checkbox" v-model="form.pain" class="w-6 h-6 accent-red-500 rounded-lg cursor-pointer">
-        </div>
-
-        <div class="flex gap-2">
-          <button v-for="t in [60, 90, 120, 180]" @click="form.rest = t"
-                  :class="form.rest === t ? (user === 'JW' ? 'bg-lime-400 text-black shadow-lg shadow-lime-400/20' : 'bg-orange-500 text-white shadow-lg shadow-orange-500/20') : 'bg-slate-800 text-slate-500'"
-                  class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all tracking-tighter">{{ t }}s</button>
+          <span class="text-xs font-black text-red-400 italic">Discomfort / Pain?</span>
+          <input type="checkbox" v-model="form.pain" class="w-6 h-6 accent-red-500">
         </div>
 
         <button @click="logData" :disabled="loading" 
-                :class="user === 'JW' ? 'bg-white hover:bg-lime-50' : 'bg-white'"
-                class="w-full text-black font-black py-5 rounded-[1.5rem] active:scale-[0.98] transition-all shadow-xl uppercase tracking-[0.25em] text-xs flex justify-center items-center gap-3">
-          <span v-if="loading" class="animate-spin text-lg">⚙️</span>
+                class="w-full bg-white text-black font-black py-5 rounded-[1.5rem] active:scale-95 transition-all shadow-xl uppercase tracking-widest text-xs flex justify-center items-center gap-3">
           {{ loading ? 'Syncing...' : 'Log Set & Start Rest' }}
         </button>
       </div>
     </div>
 
-    <div class="glass rounded-[2rem] p-6 mb-6 shadow-xl relative border-b border-white/5">
-      <div class="flex justify-between items-center mb-6">
+    <div class="glass rounded-[2rem] p-6 mb-6">
+      <div class="flex justify-between items-center mb-6 px-1">
         <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Training Consistency</span>
         <span class="text-[9px] font-black text-slate-400 bg-slate-800 px-3 py-1 rounded-full uppercase">{{ currentMonthName }}</span>
       </div>
@@ -136,10 +102,10 @@
         <div v-for="d in ['S','M','T','W','T','F','S']" class="text-[9px] font-black text-slate-700 uppercase">{{ d }}</div>
         <div v-for="e in calendarOffset" class="aspect-square"></div>
         <div v-for="d in daysInMonth" :key="d" class="relative group py-1">
-          <span :class="isToday(d) ? 'text-lime-400 font-black ring-2 ring-lime-400/10 px-1.5 py-0.5 rounded-lg' : 'text-slate-600'" class="text-[11px] font-bold">{{ d }}</span>
+          <span :class="isToday(d) ? 'text-lime-400 font-black' : 'text-slate-600'" class="text-[11px] font-bold">{{ d }}</span>
           <div v-if="hasLog(d)" 
                :class="[user === 'JW' ? 'bg-lime-400' : 'bg-orange-500', getDayStats(d).hasPain ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-slate-900' : '']" 
-               class="w-1.5 h-1.5 rounded-full mx-auto mt-2 shadow-[0_0_8px_rgba(163,230,53,0.4)]"></div>
+               class="w-1.5 h-1.5 rounded-full mx-auto mt-2"></div>
         </div>
       </div>
     </div>
@@ -153,17 +119,17 @@
         </div>
       </div>
       
-      <div v-if="todayLogs.length === 0" class="text-center py-12 text-slate-700 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900/20 rounded-[2rem] border border-dashed border-slate-800/50">
+     <div v-if="todayLogs.length === 0" class="text-center py-12 text-slate-700 text-[10px] font-black uppercase tracking-widest bg-slate-900/20 rounded-[2rem] border border-dashed border-slate-800">
         Waiting for first set...
       </div>
       
-      <div v-for="(log, i) in todayLogs" :key="i" 
-           :class="log.pain === 'Yes' || log.pain === 'TRUE' || log.pain === true ? 'border-red-500/40 bg-red-500/5' : 'border-slate-800 bg-slate-900/40'" 
-           class="border-l-[6px] p-5 rounded-2xl flex justify-between items-center transition-all animate-fadeIn shadow-lg">
+      <div v-for="(log, i) in todayLogs" :key="log.id || i"
+           :class="isPainful(log) ? 'border-red-500/40 bg-red-500/5' : 'border-slate-800 bg-slate-900/40'" 
+           class="border-l-[6px] p-5 rounded-2xl flex justify-between items-center animate-fadeIn shadow-lg transition-all mb-4">
         <div class="flex-1">
           <div class="font-black text-sm tracking-tight mb-1 uppercase">{{ log.exercise }}</div>
           <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-            <span v-if="log.duration > 0" class="text-lime-400">{{ log.duration }} min Duration</span>
+            <span v-if="log.unit === 'min'" class="text-lime-400">{{ log.duration }} min Duration</span>
             <span v-else-if="log.unit === 'km'" class="text-cyan-400">{{ log.weight }} km Distance</span>
             <span v-else class="flex gap-3">
               <span>{{ log.weight }}kg</span>
@@ -173,8 +139,8 @@
           </div>
         </div>
         <div class="text-right">
-          <div v-if="log.weight > 0 && !log.unit" class="text-xs font-black text-slate-400 italic">{{ log.weight * log.reps }}KG</div>
-          <div v-if="log.pain === 'Yes' || log.pain === 'TRUE' || log.pain === true" class="text-[8px] font-black text-red-500 uppercase mt-2 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20">Injury Warning</div>
+          <div v-if="log.weight > 0 && log.unit === 'kg'" class="text-xs font-black text-slate-400 italic">{{ log.weight * log.reps }}KG</div>
+          <div v-if="isPainful(log)" class="text-[8px] font-black text-red-500 uppercase mt-2 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20 tracking-tighter">Injury Warning</div>
         </div>
       </div>
     </div>
@@ -182,12 +148,12 @@
 </div>
 
 <script>
-const { createApp, ref, computed, onMounted } = Vue
+
+const { createApp, ref, computed, onMounted, watch, nextTick, triggerRef } = Vue;
 
 createApp({
   setup() {
-    // 切換為你的 Google Apps Script URL
-    const BASE_URL = 'https://script.google.com/macros/s/AKfycbzRaW4awALlc9Ac4tHhbqzPAipoFcClj9GghxKtUQQvgeZn2U1W3H-AOKSgDHWGZZ93bA/exec';
+    const BASE_URL = 'https://script.google.com/macros/s/AKfycbzrF0AUaOPovXz86j9KkDZX1q1T3_OBf3SBCG_a2AapdswZZQyiwMGQ3LeuEbXsFMnFBQ/exec';
     const MASTER_PASS = "0303";
     
     const isAuthenticated = ref(false);
@@ -200,6 +166,13 @@ createApp({
     const syncing = ref(false);
     const rawLogs = ref([]);
     const form = ref({ exercise: '', weight: '', reps: '', duration: '', rest: 90, pain: false });
+
+    // 統一獲取今日日期字串 (YYYY/M/D)
+    const getTodayStr = (dateObj = new Date()) => {
+  const d = new Date(dateObj);
+  // 強制產出 YYYY-MM-DD 格式，例如 2025-12-23
+  return d.toISOString().split('T')[0];
+};
 
     const actionLibrary = {
       JW: {
@@ -222,23 +195,143 @@ createApp({
 
     form.value.exercise = actionLibrary.JW["Chest"][0];
 
-    // --- 單位識別邏輯 ---
     const unitType = computed(() => {
       const e = form.value.exercise.toLowerCase();
-      // 分鐘計時類
       if (["plank", "sit", "hold", "yoga", "tai chi", "dead bug", "bird dog", "stretch"].some(k => e.includes(k))) return 'min';
-      // 公里距離類
       if (["treadmill", "running", "walk", "bike", "swimming", "stairmaster", "sprint", "elliptical", "rowing"].some(k => e.includes(k))) return 'km';
-      // 重量次數類 (預設)
       return 'kg';
     });
 
-    const unitLabel = computed(() => {
-      if (unitType.value === 'min') return 'MIN';
-      if (unitType.value === 'km') return 'KM';
-      return 'KG';
+    const unitLabel = computed(() => unitType.value.toUpperCase());
+
+   const fetchHistory = async (isBackground = false) => {
+  if (!isAuthenticated.value) return;
+  if (!isBackground) syncing.value = true;
+  
+  try {
+    const res = await fetch(`${BASE_URL}?user=${user.value}`);
+    const data = await res.json();
+    const incomingLogs = data.logs || [];
+
+    // 【去重邏輯】
+    // 只保留仲未上傳成功嘅 temp 紀錄，但如果 incomingLogs 入面已經有相同內容（Exercise/Weight/Reps），
+    // 就代表雲端已經返咗嚟，可以踢走個 temp 紀錄。
+    const cleanedLocal = rawLogs.value.filter(local => {
+      if (!String(local.id).startsWith('temp_')) return false;
+      // 檢查 incomingLogs 有冇一條一模一樣嘅（代表已經 Sync 完）
+      const alreadySynced = incomingLogs.some(cloud => 
+        cloud.exercise === local.exercise && 
+        cloud.weight == local.weight && 
+        cloud.reps == local.reps
+      );
+      return !alreadySynced; // 如果未 sync 完就保留
     });
 
+    // 重新組合：[仲未上傳完嘅] + [雲端所有舊紀錄]
+    rawLogs.value = [...cleanedLocal, ...incomingLogs];
+    
+    if (typeof triggerRef === 'function') triggerRef(rawLogs);
+  } catch (e) {
+    console.error("Sync Failed", e);
+  } finally {
+    syncing.value = false;
+  }
+};
+
+    const logData = async () => {
+  if (loading.value) return;
+
+  // 1. 檢查必填項
+  if (!form.value.exercise) return alert("請選擇動作");
+
+  // 2. 建立暫時 ID
+  const tempId = 'temp_' + Date.now();
+  const payload = {
+    id: tempId, 
+    date: getTodayStr(),
+    user: user.value,
+    exercise: form.value.exercise,
+    weight: Number(form.value.weight) || 0,
+    reps: Number(form.value.reps) || 0,
+    duration: Number(form.value.duration) || 0,
+    rest: Number(form.value.rest) || 90,
+    pain: form.value.pain ? "Yes" : "No",
+    unit: unitType.value
+  };
+
+  // 3. 即時加入畫面 (Optimistic Update)
+  rawLogs.value.unshift(payload);
+  
+  loading.value = true;
+  try {
+    saveLastInput(); 
+
+    // 使用 URLSearchParams 係最穩陣嘅 POST 方式，避免 CORS 阻攔
+    const formData = new URLSearchParams();
+    for (const key in payload) {
+      formData.append(key, payload[key]);
+    }
+
+    // 發送到 Google Sheet
+    await fetch(BASE_URL, {
+      method: 'POST',
+      mode: 'no-cors', // 依然維持 no-cors，但內容會經 URLSearchParams 傳送
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    });
+    
+    startTimer(form.value.rest);
+    form.value.pain = false;
+
+    // 等 3.5 秒後同步
+    setTimeout(() => {
+      fetchHistory(true); 
+    }, 3500);
+    
+  } catch (e) { 
+    console.error(e);
+    alert(`Sync Error: 資料可能未成功上傳`); 
+  } finally { 
+    loading.value = false; 
+  }
+};
+   const todayLogs = computed(() => {
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const currentUser = user.value;
+
+  if (!rawLogs.value || rawLogs.value.length === 0) return [];
+
+  return rawLogs.value.filter(l => {
+    if (String(l.user).trim() !== String(currentUser).trim()) return false;
+
+    try {
+      let logD = new Date(l.date);
+      if (isNaN(logD.getTime())) {
+        let cleanStr = String(l.date).replace(/\//g, '-').split(' ')[0];
+        logD = new Date(cleanStr);
+      }
+      if (isNaN(logD.getTime())) return false;
+
+      const logStr = `${logD.getFullYear()}-${String(logD.getMonth() + 1).padStart(2, '0')}-${String(logD.getDate()).padStart(2, '0')}`;
+      return logStr === today;
+    } catch (e) {
+      return false;
+    }
+  });
+});
+
+    const dailyVol = computed(() => {
+      return todayLogs.value.reduce((acc, l) => {
+        if (l.unit === 'min') return acc + (Number(l.duration) || 0);
+        if (l.unit === 'km') return acc + (Number(l.weight) || 0);
+        return acc + (Number(l.weight) * Number(l.reps) || 0);
+      }, 0);
+    });
+
+    // 輔助函數
+    const isPainful = (log) => log.pain === 'Yes' || log.pain === 'TRUE' || log.pain === true;
+    const formatVol = (v) => v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(unitType.value === 'km' ? 1 : 0);
     const checkPass = () => {
       if (passInput.value === MASTER_PASS) {
         isAuthenticated.value = true;
@@ -249,142 +342,101 @@ createApp({
         setTimeout(() => { passError.value = false; passInput.value = ""; }, 1000);
       }
     };
-
-    const fetchHistory = async (isBackground = false) => {
-      if (!isAuthenticated.value) return;
-      if (!isBackground) syncing.value = true;
-      try {
-        // GAS 獲取數據 (通常透過 doGet)
-        const res = await fetch(`${BASE_URL}?user=${user.value}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        rawLogs.value = data.logs || [];
-      } catch (e) { console.error("Sync failed", e); }
-      finally { syncing.value = false; }
-    };
-
-    const logData = async () => {
-      if (loading.value) return;
-      loading.value = true;
-      
-      const payload = {
-        date: new Date().toLocaleDateString('zh-HK'),
-        user: user.value,
-        exercise: form.value.exercise,
-        weight: Number(form.value.weight) || 0,
-        reps: Number(form.value.reps) || 0,
-        duration: Number(form.value.duration) || 0,
-        rest: Number(form.value.rest) || 0,
-        pain: form.value.pain ? "Yes" : "No",
-        unit: unitType.value
-      };
-
-      try {
-        // 發送到 Google Apps Script
-        const response = await fetch(BASE_URL, {
-          method: 'POST',
-          mode: 'no-cors', // GAS 跨域常用配置
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        
-        // 開始計時並清空輸入
-        startTimer(form.value.rest);
-        
-        // 模擬立即更新 (因為 no-cors 無法獲取回傳內容)
-        rawLogs.value.unshift(payload);
-        
-        form.value.weight = ''; 
-        form.value.reps = ''; 
-        form.value.duration = ''; 
-        form.value.pain = false;
-        
-        // 延遲同步確保後端處理完成
-        setTimeout(fetchHistory, 2000);
-      } catch (e) { alert("儲存失敗：請確認網絡連接"); }
-      finally { loading.value = false; }
-    };
-
+    const switchUser = (u) => { user.value = u; fetchHistory(); };
+    const skipRest = () => { userTimers.value[user.value] = 0; if(intervals[user.value]) clearInterval(intervals[user.value]); };
     const startTimer = (s) => {
-      if (intervals.JW) clearInterval(intervals.JW);
-      if (intervals.EP) clearInterval(intervals.EP);
       userTimers.value[user.value] = s;
+      if (intervals[user.value]) clearInterval(intervals[user.value]);
       intervals[user.value] = setInterval(() => {
         if (userTimers.value[user.value] > 0) userTimers.value[user.value]--;
-        else { 
-          clearInterval(intervals[user.value]); 
-          intervals[user.value] = null; 
-          if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
-        }
+        else clearInterval(intervals[user.value]);
       }, 1000);
     };
-
-    const skipRest = () => {
-      if (intervals[user.value]) clearInterval(intervals[user.value]);
-      userTimers.value[user.value] = 0;
+    const saveLastInput = () => {
+      localStorage.setItem(`last_${user.value}_${form.value.exercise}`, JSON.stringify({
+        weight: form.value.weight, reps: form.value.reps, duration: form.value.duration
+      }));
+    };
+    const loadLastInput = () => {
+      const saved = localStorage.getItem(`last_${user.value}_${form.value.exercise}`);
+      if (saved) {
+        const d = JSON.parse(saved);
+        form.value.weight = d.weight; form.value.reps = d.reps; form.value.duration = d.duration;
+      } else {
+        form.value.weight = ''; form.value.reps = ''; form.value.duration = '';
+      }
     };
 
-    const switchUser = (u) => {
-      user.value = u;
-      form.value.exercise = Object.values(actionLibrary[u])[0][0];
-      fetchHistory();
-    };
-
+    // Calendar & Streak
     const now = new Date();
     const currentMonthName = now.toLocaleString('default', { month: 'long' });
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const calendarOffset = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
     const isToday = (d) => d === now.getDate() && now.getMonth() === new Date().getMonth();
-    
     const hasLog = (d) => {
-      const dStr = new Date(now.getFullYear(), now.getMonth(), d).toLocaleDateString('zh-HK');
-      return rawLogs.value.some(l => l.date === dStr);
+      const targetDate = getTodayStr(new Date(now.getFullYear(), now.getMonth(), d));
+      return rawLogs.value.some(l => {
+        // 統一轉做 Date 再轉返 YYYY-MM-DD 比對
+        try {
+          const dObj = new Date(l.date);
+          const logDateStr = dObj.toISOString().split('T')[0];
+          return logDateStr === targetDate;
+        } catch(e) { return false; }
+      });
     };
 
     const getDayStats = (d) => {
-      const dStr = new Date(now.getFullYear(), now.getMonth(), d).toLocaleDateString('zh-HK');
-      const logs = rawLogs.value.filter(l => l.date === dStr);
-      return { hasPain: logs.some(l => l.pain === 'Yes' || l.pain === 'TRUE' || l.pain === true) };
+      const targetDate = getTodayStr(new Date(now.getFullYear(), now.getMonth(), d));
+      const logs = rawLogs.value.filter(l => {
+        try {
+          return new Date(l.date).toISOString().split('T')[0] === targetDate;
+        } catch(e) { return false; }
+      });
+      return { hasPain: logs.some(isPainful) };
     };
-
-    const todayLogs = computed(() => {
-      const today = new Date().toLocaleDateString('zh-HK');
-      return rawLogs.value.filter(l => l.date === today).reverse();
-    });
-
-    const dailyVol = computed(() => {
-      return todayLogs.value.reduce((acc, l) => {
-        if (l.unit === 'min') return acc + (Number(l.duration) || 0);
-        if (l.unit === 'km') return acc + (Number(l.weight) || 0);
-        return acc + (Number(l.weight) * Number(l.reps) || 0);
-      }, 0);
-    });
-
-    const formatVol = (v) => v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(unitType.value === 'km' ? 1 : 0);
-
     const streak = computed(() => {
-      if (!rawLogs.value.length) return 0;
-      const dates = new Set(rawLogs.value.map(l => l.date));
-      let count = 0, d = new Date();
-      if (!dates.has(d.toLocaleDateString('zh-HK'))) d.setDate(d.getDate() - 1);
-      while (dates.has(d.toLocaleDateString('zh-HK'))) { count++; d.setDate(d.getDate() - 1); }
-      return count;
-    });
+  // 將所有紀錄嘅日期統一轉做 YYYY-MM-DD 格式嘅 Set
+  const dates = new Set(rawLogs.value.map(l => {
+    try {
+      return new Date(l.date).toISOString().split('T')[0];
+    } catch(e) { return null; }
+  }).filter(d => d !== null));
+
+  let count = 0;
+  let d = new Date();
+  let todayStr = getTodayStr(d);
+
+  // 如果今日無紀錄，就由琴日開始計起（費事一過 12 點就斷 Streak）
+  if (!dates.has(todayStr)) {
+    d.setDate(d.getDate() - 1);
+    todayStr = getTodayStr(d);
+  }
+
+  // 只要 Set 裡面有呢個日期，就 count++ 向上數
+  while (dates.has(todayStr)) {
+    count++;
+    d.setDate(d.getDate() - 1);
+    todayStr = getTodayStr(d);
+  }
+  return count;
+});
 
     onMounted(() => {
-      if (localStorage.getItem('gym_auth') === 'true') {
+    // 檢查 localStorage 恢復登入
+    const auth = localStorage.getItem('gym_auth');
+    if (auth === 'true') {
         isAuthenticated.value = true;
+        // 登入咗就即刻去攞資料
         fetchHistory();
-      }
-      setInterval(() => fetchHistory(true), 60000);
-    });
+    }
+});
 
     return { 
       isAuthenticated, passInput, passError, checkPass,
       user, userTimers, form, actionLibrary, loading, syncing,
       daysInMonth, calendarOffset, isToday, hasLog, getDayStats,
       switchUser, streak, todayLogs, unitType, unitLabel, skipRest, logData,
-      dailyVol, formatVol, currentMonthName
+      dailyVol, formatVol, currentMonthName, loadLastInput, isPainful
     }
   }
 }).mount('#app')
